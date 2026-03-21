@@ -1,0 +1,1213 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hex</title>
+<meta name="description" content="Hex — Gorilla Tag Modder & C# Backend Developer. First Arabic Gorilla Tag modding channel.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=Press+Start+2P&family=Noto+Kufi+Arabic:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --green: #00ff41;
+    --green-dim: rgba(0, 255, 65, 0.6);
+    --green-faint: rgba(0, 255, 65, 0.15);
+    --green-ghost: rgba(0, 255, 65, 0.04);
+    --green-glow: rgba(0, 255, 65, 0.3);
+    --bg: #0a0a0a;
+    --bg-card: #0f0f0f;
+    --bg-card-hover: #141414;
+    --border: rgba(0, 255, 65, 0.1);
+    --border-hover: rgba(0, 255, 65, 0.3);
+    --text: #00ff41;
+    --text-dim: rgba(0, 255, 65, 0.5);
+    --text-body: rgba(0, 255, 65, 0.75);
+    --font-mono: 'IBM Plex Mono', monospace;
+    --font-pixel: 'Press Start 2P', monospace;
+    --font-arabic: 'Noto Kufi Arabic', sans-serif;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html {
+    scroll-behavior: smooth;
+    scrollbar-width: thin;
+    scrollbar-color: var(--green-faint) var(--bg);
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-mono);
+    overflow-x: hidden;
+    cursor: default;
+  }
+
+  ::selection {
+    background: var(--green);
+    color: var(--bg);
+  }
+
+  /* ===== SCANLINES OVERLAY ===== */
+  body::before {
+    content: '';
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 2px,
+      rgba(0, 255, 65, 0.008) 2px,
+      rgba(0, 255, 65, 0.008) 4px
+    );
+    pointer-events: none;
+    z-index: 9999;
+  }
+
+  /* ===== GRID BG ===== */
+  body::after {
+    content: '';
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background-image:
+      linear-gradient(rgba(0,255,65,0.02) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,255,65,0.02) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: -1;
+  }
+
+  /* ===== CUSTOM CURSOR ===== */
+  a, button, .clickable { cursor: pointer; }
+
+  /* ===== LANGUAGE TOGGLE ===== */
+  .lang-toggle {
+    position: fixed;
+    top: 24px;
+    right: 24px;
+    z-index: 1000;
+    display: flex;
+    border: 1px solid var(--border);
+    border-radius: 2px;
+    overflow: hidden;
+    background: var(--bg);
+  }
+
+  .lang-btn {
+    padding: 8px 16px;
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--text-dim);
+    background: transparent;
+    border: none;
+    transition: all 0.3s;
+    letter-spacing: 1px;
+  }
+
+  .lang-btn.active {
+    background: var(--green-faint);
+    color: var(--green);
+    text-shadow: 0 0 8px var(--green-glow);
+  }
+
+  .lang-btn:hover {
+    color: var(--green);
+  }
+
+  /* ===== NAV ===== */
+  nav {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    padding: 20px 40px;
+    display: flex;
+    align-items: center;
+    gap: 32px;
+    z-index: 100;
+    background: linear-gradient(to bottom, var(--bg) 60%, transparent);
+    backdrop-filter: blur(4px);
+  }
+
+  .nav-logo {
+    font-family: var(--font-pixel);
+    font-size: 14px;
+    color: var(--green);
+    text-shadow: 0 0 12px var(--green-glow);
+    text-decoration: none;
+    letter-spacing: 2px;
+  }
+
+  .nav-links {
+    display: flex;
+    gap: 8px;
+    list-style: none;
+    margin-left: auto;
+    margin-right: 100px;
+  }
+
+  .nav-links a {
+    color: var(--text-dim);
+    text-decoration: none;
+    font-size: 12px;
+    padding: 6px 12px;
+    border: 1px solid transparent;
+    transition: all 0.3s;
+    letter-spacing: 0.5px;
+  }
+
+  .nav-links a:hover, .nav-links a.active {
+    color: var(--green);
+    border-color: var(--border-hover);
+    text-shadow: 0 0 8px var(--green-glow);
+  }
+
+  .nav-links a::before {
+    content: '> ';
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+
+  .nav-links a:hover::before {
+    opacity: 1;
+  }
+
+  /* ===== SECTIONS ===== */
+  section {
+    min-height: 100vh;
+    padding: 120px 60px 80px;
+    max-width: 1200px;
+    margin: 0 auto;
+    position: relative;
+  }
+
+  .section-label {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--text-dim);
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .section-label::before {
+    content: '';
+    width: 24px;
+    height: 1px;
+    background: var(--green-dim);
+  }
+
+  .section-title {
+    font-family: var(--font-pixel);
+    font-size: 28px;
+    color: var(--green);
+    text-shadow: 0 0 20px var(--green-glow), 0 0 40px rgba(0,255,65,0.1);
+    margin-bottom: 48px;
+    line-height: 1.6;
+  }
+
+  [dir="rtl"] .section-title {
+    font-family: var(--font-arabic);
+    font-size: 32px;
+    font-weight: 700;
+  }
+
+  /* ===== HERO ===== */
+  #hero {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: flex-start;
+    min-height: 100vh;
+    padding-top: 0;
+  }
+
+  .hero-prefix {
+    font-size: 14px;
+    color: var(--text-dim);
+    margin-bottom: 16px;
+    letter-spacing: 3px;
+    animation: fadeIn 0.8s ease-out;
+  }
+
+  .hero-prefix .prompt {
+    color: var(--green);
+  }
+
+  .hero-name {
+    font-family: var(--font-pixel);
+    font-size: clamp(48px, 8vw, 96px);
+    color: var(--green);
+    text-shadow: 0 0 30px var(--green-glow), 0 0 60px rgba(0,255,65,0.15);
+    line-height: 1.2;
+    margin-bottom: 24px;
+    animation: glitchIn 1s ease-out;
+  }
+
+  .hero-tagline {
+    font-size: 16px;
+    color: var(--text-body);
+    max-width: 600px;
+    line-height: 1.8;
+    margin-bottom: 40px;
+    min-height: 1.8em;
+  }
+
+  .hero-tagline .type-cursor {
+    display: inline-block;
+    width: 2px;
+    height: 1em;
+    background: var(--green);
+    margin-left: 2px;
+    animation: blink 1s step-end infinite;
+    vertical-align: text-bottom;
+    box-shadow: 0 0 6px var(--green-glow);
+  }
+
+  .hero-links {
+    display: flex;
+    gap: 16px;
+    animation: fadeIn 1s ease-out 0.6s both;
+  }
+
+  .hero-link {
+    padding: 12px 24px;
+    font-family: var(--font-mono);
+    font-size: 13px;
+    color: var(--green);
+    background: transparent;
+    border: 1px solid var(--border-hover);
+    text-decoration: none;
+    transition: all 0.3s;
+    letter-spacing: 1px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .hero-link:hover {
+    background: var(--green-faint);
+    border-color: var(--green);
+    text-shadow: 0 0 8px var(--green-glow);
+    box-shadow: 0 0 20px rgba(0,255,65,0.1);
+  }
+
+  .hero-link.primary {
+    background: var(--green-faint);
+    border-color: var(--green-dim);
+  }
+
+  /* Blinking cursor in hero */
+  .cursor {
+    display: inline-block;
+    width: 3px;
+    height: 1em;
+    background: var(--green);
+    margin-left: 4px;
+    animation: blink 1s step-end infinite;
+    vertical-align: text-bottom;
+    box-shadow: 0 0 8px var(--green-glow);
+  }
+
+  /* ===== ABOUT ===== */
+  .about-content {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 60px;
+    align-items: start;
+  }
+
+  .about-text {
+    font-size: 15px;
+    color: var(--text-body);
+    line-height: 2;
+  }
+
+  .about-text p {
+    margin-bottom: 20px;
+  }
+
+  .about-terminal {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    padding: 0;
+    font-size: 13px;
+    position: relative;
+  }
+
+  .terminal-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border);
+    background: rgba(0,255,65,0.02);
+  }
+
+  .terminal-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    border: 1px solid var(--green-faint);
+  }
+
+  .terminal-dot.r { border-color: #ff5f57; }
+  .terminal-dot.y { border-color: #ffbd2e; }
+  .terminal-dot.g { border-color: #28ca41; }
+
+  .terminal-title {
+    font-size: 11px;
+    color: var(--text-dim);
+    margin-left: 8px;
+    letter-spacing: 1px;
+  }
+
+  .terminal-body {
+    padding: 20px;
+    line-height: 2;
+  }
+
+  .terminal-line {
+    margin-bottom: 4px;
+  }
+
+  .terminal-line .key {
+    color: var(--text-dim);
+  }
+
+  .terminal-line .val {
+    color: var(--green);
+  }
+
+  .terminal-line .prompt-sym {
+    color: var(--green-dim);
+    margin-right: 8px;
+  }
+
+  /* ===== PROJECTS ===== */
+  .projects-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+    gap: 24px;
+  }
+
+  .project-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    padding: 32px;
+    transition: all 0.4s;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .project-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, var(--green), transparent);
+    opacity: 0;
+    transition: opacity 0.4s;
+  }
+
+  .project-card:hover {
+    border-color: var(--border-hover);
+    background: var(--bg-card-hover);
+    box-shadow: 0 0 30px rgba(0,255,65,0.05);
+    transform: translateY(-4px);
+  }
+
+  .project-card:hover::before {
+    opacity: 1;
+  }
+
+  .project-tag {
+    font-size: 10px;
+    color: var(--text-dim);
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    margin-bottom: 12px;
+  }
+
+  .project-name {
+    font-family: var(--font-pixel);
+    font-size: 14px;
+    color: var(--green);
+    margin-bottom: 16px;
+    text-shadow: 0 0 10px var(--green-glow);
+    line-height: 1.6;
+  }
+
+  .project-desc {
+    font-size: 13px;
+    color: var(--text-body);
+    line-height: 1.8;
+    margin-bottom: 24px;
+  }
+
+  .project-tech {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 20px;
+  }
+
+  .tech-tag {
+    font-size: 10px;
+    padding: 4px 10px;
+    border: 1px solid var(--border);
+    color: var(--text-dim);
+    letter-spacing: 1px;
+  }
+
+  .project-link {
+    font-size: 12px;
+    color: var(--green-dim);
+    text-decoration: none;
+    letter-spacing: 1px;
+    transition: all 0.3s;
+  }
+
+  .project-link:hover {
+    color: var(--green);
+    text-shadow: 0 0 8px var(--green-glow);
+  }
+
+  .project-link::before {
+    content: '→ ';
+  }
+
+  /* ===== SKILLS ===== */
+  .skills-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 24px;
+  }
+
+  .skill-group {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    padding: 28px;
+    transition: all 0.3s;
+  }
+
+  .skill-group:hover {
+    border-color: var(--border-hover);
+  }
+
+  .skill-group-title {
+    font-family: var(--font-pixel);
+    font-size: 11px;
+    color: var(--green);
+    margin-bottom: 20px;
+    text-shadow: 0 0 8px var(--green-glow);
+    letter-spacing: 1px;
+  }
+
+  .skill-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 14px;
+    font-size: 13px;
+    color: var(--text-body);
+  }
+
+  .skill-bar-bg {
+    flex: 1;
+    height: 4px;
+    background: var(--green-ghost);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .skill-bar-fill {
+    height: 100%;
+    background: var(--green);
+    box-shadow: 0 0 8px var(--green-glow);
+    transition: width 1.5s ease-out;
+    width: 0;
+  }
+
+  .skill-name {
+    min-width: 100px;
+  }
+
+  /* ===== CONTACT ===== */
+  .contact-content {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 60px;
+    align-items: start;
+  }
+
+  .contact-text {
+    font-size: 15px;
+    color: var(--text-body);
+    line-height: 2;
+    margin-bottom: 32px;
+  }
+
+  .contact-links {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .contact-link {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 16px 20px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    text-decoration: none;
+    color: var(--text-body);
+    font-size: 14px;
+    transition: all 0.3s;
+    letter-spacing: 0.5px;
+  }
+
+  .contact-link:hover {
+    border-color: var(--border-hover);
+    background: var(--bg-card-hover);
+    color: var(--green);
+    transform: translateX(8px);
+    box-shadow: 0 0 20px rgba(0,255,65,0.05);
+  }
+
+  .contact-link .link-icon {
+    font-size: 18px;
+    width: 24px;
+    text-align: center;
+    color: var(--green-dim);
+  }
+
+  .contact-link .link-label {
+    font-size: 11px;
+    color: var(--text-dim);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+  }
+
+  .contact-link .link-value {
+    color: var(--text-body);
+    font-size: 14px;
+  }
+
+  .contact-link-info {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  /* ASCII art decoration */
+  .ascii-art {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--green-faint);
+    line-height: 1.4;
+    white-space: pre;
+    user-select: none;
+  }
+
+  /* ===== FOOTER ===== */
+  footer {
+    text-align: center;
+    padding: 40px;
+    font-size: 12px;
+    color: var(--text-dim);
+    border-top: 1px solid var(--border);
+    max-width: 1200px;
+    margin: 0 auto;
+    letter-spacing: 1px;
+  }
+
+  /* ===== SCROLL ANIMATIONS ===== */
+  .reveal {
+    opacity: 0;
+    transform: translateY(30px);
+    transition: all 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .reveal.visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  /* Stagger children */
+  .stagger > * {
+    opacity: 0;
+    transform: translateY(20px);
+    transition: all 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .stagger.visible > *:nth-child(1) { transition-delay: 0.05s; }
+  .stagger.visible > *:nth-child(2) { transition-delay: 0.1s; }
+  .stagger.visible > *:nth-child(3) { transition-delay: 0.15s; }
+  .stagger.visible > *:nth-child(4) { transition-delay: 0.2s; }
+  .stagger.visible > *:nth-child(5) { transition-delay: 0.25s; }
+  .stagger.visible > *:nth-child(6) { transition-delay: 0.3s; }
+
+  .stagger.visible > * {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  /* ===== ANIMATIONS ===== */
+  @keyframes blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0; }
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(16px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  @keyframes glitchIn {
+    0% { opacity: 0; transform: translateY(20px) skewX(-2deg); filter: blur(4px); }
+    30% { opacity: 1; transform: translateY(-4px) skewX(1deg); filter: blur(0); }
+    50% { transform: translateY(2px) skewX(-0.5deg); }
+    100% { transform: translateY(0) skewX(0); }
+  }
+
+  /* ===== FLOATING PARTICLES ===== */
+  .particles {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: -1;
+  }
+
+  .particle {
+    position: absolute;
+    width: 2px;
+    height: 2px;
+    background: var(--green);
+    opacity: 0;
+    animation: floatParticle 8s linear infinite;
+  }
+
+  @keyframes floatParticle {
+    0% { opacity: 0; transform: translateY(100vh); }
+    10% { opacity: 0.3; }
+    90% { opacity: 0.3; }
+    100% { opacity: 0; transform: translateY(-10vh); }
+  }
+
+  /* ===== RTL SUPPORT ===== */
+  [dir="rtl"] body {
+    font-family: var(--font-arabic), var(--font-mono);
+  }
+
+  [dir="rtl"] .nav-links {
+    margin-left: 100px;
+    margin-right: auto;
+  }
+
+  [dir="rtl"] .lang-toggle {
+    right: auto;
+    left: 24px;
+  }
+
+  [dir="rtl"] .section-label::before {
+    order: 1;
+  }
+
+  [dir="rtl"] .contact-link:hover {
+    transform: translateX(-8px);
+  }
+
+  [dir="rtl"] .project-link::before {
+    content: '← ';
+  }
+
+  [dir="rtl"] .nav-links a::before {
+    content: ' <';
+    position: relative;
+  }
+
+  [dir="rtl"] .hero-prefix,
+  [dir="rtl"] .terminal-line {
+    direction: ltr;
+    text-align: left;
+  }
+
+  /* ===== RESPONSIVE ===== */
+  @media (max-width: 900px) {
+    section { padding: 100px 24px 60px; }
+    nav { padding: 16px 20px; }
+    .nav-links { display: none; }
+    .about-content, .contact-content { grid-template-columns: 1fr; gap: 32px; }
+    .projects-grid { grid-template-columns: 1fr; }
+    .hero-name { font-size: clamp(36px, 10vw, 64px); }
+    .hero-links { flex-direction: column; }
+    .section-title { font-size: 20px; }
+    [dir="rtl"] .section-title { font-size: 24px; }
+    .lang-toggle { top: 16px; right: 16px; }
+    [dir="rtl"] .lang-toggle { left: 16px; right: auto; }
+  }
+
+  /* ===== MOBILE NAV ===== */
+  .mobile-nav {
+    display: none;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: var(--bg);
+    border-top: 1px solid var(--border);
+    z-index: 100;
+    padding: 8px 0;
+    backdrop-filter: blur(8px);
+  }
+
+  .mobile-nav-links {
+    display: flex;
+    justify-content: space-around;
+    list-style: none;
+  }
+
+  .mobile-nav-links a {
+    color: var(--text-dim);
+    text-decoration: none;
+    font-size: 10px;
+    letter-spacing: 1px;
+    padding: 8px;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    transition: color 0.3s;
+  }
+
+  .mobile-nav-links a:hover {
+    color: var(--green);
+  }
+
+  .mobile-nav-links .nav-icon {
+    font-size: 16px;
+  }
+
+  @media (max-width: 900px) {
+    .mobile-nav { display: block; }
+    body { padding-bottom: 64px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Particles -->
+<div class="particles" id="particles"></div>
+
+<!-- Language Toggle -->
+<div class="lang-toggle">
+  <button class="lang-btn active" id="btn-en" onclick="setLang('en')">EN</button>
+  <button class="lang-btn" id="btn-ar" onclick="setLang('ar')">ع</button>
+</div>
+
+<!-- Navigation -->
+<nav>
+  <a href="#hero" class="nav-logo">HEX</a>
+  <ul class="nav-links" id="navLinks">
+    <li><a href="#about" data-en="About" data-ar="عنّي">About</a></li>
+    <li><a href="#projects" data-en="Projects" data-ar="مشاريعي">Projects</a></li>
+    <li><a href="#skills" data-en="Skills" data-ar="مهاراتي">Skills</a></li>
+    <li><a href="#contact" data-en="Contact" data-ar="تواصل">Contact</a></li>
+  </ul>
+</nav>
+
+<!-- Mobile Nav -->
+<div class="mobile-nav">
+  <ul class="mobile-nav-links">
+    <li><a href="#about"><span class="nav-icon">◉</span><span data-en="About" data-ar="عنّي">About</span></a></li>
+    <li><a href="#projects"><span class="nav-icon">◈</span><span data-en="Projects" data-ar="مشاريعي">Projects</span></a></li>
+    <li><a href="#skills"><span class="nav-icon">◆</span><span data-en="Skills" data-ar="مهاراتي">Skills</span></a></li>
+    <li><a href="#contact"><span class="nav-icon">◇</span><span data-en="Contact" data-ar="تواصل">Contact</span></a></li>
+  </ul>
+</div>
+
+<!-- ===== HERO ===== -->
+<section id="hero">
+  <div class="hero-prefix"><span class="prompt">$</span> whoami</div>
+  <h1 class="hero-name" data-en="Hex" data-ar="هكس">Hex</h1>
+  <p class="hero-tagline" id="typewriter" data-en="Gorilla Tag Modder — C# Developer — Hex?." data-ar="مودّر قورلا تاق — مطوّر C# — هكس؟"></p>
+  <div class="hero-links">
+    <a href="#projects" class="hero-link primary" data-en="View Projects" data-ar="شف مشاريعي">View Projects</a>
+    <a href="https://github.com/itsreallyhex" target="_blank" class="hero-link" data-en="GitHub" data-ar="GitHub">GitHub</a>
+  </div>
+  <span class="cursor"></span>
+</section>
+
+<!-- ===== ABOUT ===== -->
+<section id="about">
+  <div class="reveal">
+    <div class="section-label" data-en="// ABOUT" data-ar="// عنّي">// ABOUT</div>
+    <h2 class="section-title" data-en="About Me" data-ar="عنّي">About Me</h2>
+  </div>
+  <div class="about-content">
+    <div class="about-text reveal">
+      <p data-en="I'm Hex — a 15-year-old developer from Saudi Arabia. I got into programming through Gorilla Tag modding, and it completely changed my path. What started as tinkering with BepInEx mods evolved into a genuine passion for software engineering." data-ar="أنا هكس — مطوّر عمري 15 سنة من السعودية. دخلت عالم البرمجة من باب مودات Gorilla Tag، وغيّرت مساري بالكامل. اللي بدأ كتجربة بسيطة بمودات BepInEx تحوّل لشغف حقيقي بهندسة البرمجيات.">I'm Hex — a 15-year-old developer from Saudi Arabia. I got into programming through Gorilla Tag modding, and it completely changed my path. What started as tinkering with BepInEx mods evolved into a genuine passion for software engineering.</p>
+    </div>
+    <div class="about-terminal reveal">
+      <div class="terminal-header">
+        <span class="terminal-dot r"></span>
+        <span class="terminal-dot y"></span>
+        <span class="terminal-dot g"></span>
+        <span class="terminal-title">hex@Isitreallyhex?.com:~</span>
+      </div>
+      <div class="terminal-body">
+        <div class="terminal-line"><span class="prompt-sym"></span>C:\Users\Hex\hex.json</div>
+        <div class="terminal-line"><span class="key">"name"</span>: <span class="val">"Abdul-ilah"</span></div>
+        <div class="terminal-line"><span class="key">"Known As"</span>: <span class="val">"Hex"</span></div>
+        <div class="terminal-line"><span class="key">"BirthDay"</span>: <span class="val">"2010/8/23"</span></div>
+        <div class="terminal-line"><span class="key">"age"</span>: <span class="val">15</span></div>
+        <div class="terminal-line"><span class="key">"focus"</span>: <span class="val">"C#"</span></div>
+        <div class="terminal-line"><span class="key">"passion"</span>: <span class="val">"Modding"</span></div>
+        <div class="terminal-line"><span class="key">"status"</span>: <span class="val">"Doing somthing."</span></div>
+        <div class="terminal-line"><span class="prompt-sym">C:\Users\Hex\hex.json</span> <span class="cursor"></span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== PROJECTS ===== -->
+<section id="projects">
+  <div class="reveal">
+    <div class="section-label" data-en="// PROJECTS" data-ar="// مشاريعي">// PROJECTS</div>
+    <h2 class="section-title" data-en="Projects" data-ar="مشاريعي">Projects</h2>
+  </div>
+  <div class="projects-grid stagger">
+    <div class="project-card">
+      <div class="project-tag" data-en="MODDING TOOL" data-ar="أداة مودنق">MODDING TOOL</div>
+      <div class="project-name">HexTemplate</div>
+      <p class="project-desc" data-en="A BepInEx mod template for Gorilla Tag — giving modders a clean starting point so they can focus on building, not boilerplate." data-ar="قالب BepInEx لمودات Gorilla Tag — يعطي المودّرز نقطة بداية نظيفة عشان يركّزون على البناء مو الأساسيات.">A BepInEx mod template for Gorilla Tag — giving modders a clean starting point so they can focus on building, not boilerplate.</p>
+      <div class="project-tech">
+        <span class="tech-tag">C#</span>
+        <span class="tech-tag">Gorilla Tag</span>
+        <span class="tech-tag">Modding</span>
+        <span class="tech-tag">Template</span>
+      </div>
+      <a href="https://github.com/itsreallyhex" target="_blank" class="project-link" data-en="View on GitHub" data-ar="شف على GitHub">View on GitHub</a>
+    </div>
+
+    <div class="project-card">
+      <div class="project-tag" data-en="DISCORD BOT" data-ar="بوت ديسكورد">DISCORD BOT</div>
+      <div class="project-name">Discord Bot</div>
+      <p class="project-desc" data-en="Custom Discord bot built in C# — handling moderation, utility commands, and community engagement for modding servers." data-ar="بوت ديسكورد مبني بـ C# — يتعامل مع الإدارة والأوامر وتفاعل المجتمع لسيرفرات المودنق.">Custom Discord bot built in C# — handling moderation, utility commands, and community engagement for modding servers.</p>
+      <div class="project-tech">
+        <span class="tech-tag">C#</span>
+        <span class="tech-tag">Discord.NET</span>
+        <span class="tech-tag">Template</span>
+      </div>
+      <a href="https://github.com/itsreallyhex" target="_blank" class="project-link" data-en="View on GitHub" data-ar="شف على GitHub">View on GitHub</a>
+    </div>
+
+    <div class="project-card">
+      <div class="project-tag" data-en="MORE COMING" data-ar="اكثر قادم">???</div>
+      <div class="project-name">???</div>
+      <p class="project-desc" data-en="More projects are coming.." data-ar="مشاريع اكثر قادمه..">More projects are coming..</p>
+      <div class="project-tech">
+        <span class="tech-tag">???</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== SKILLS ===== -->
+<section id="skills">
+  <div class="reveal">
+    <div class="section-label" data-en="// SKILLS" data-ar="// مهاراتي">// SKILLS</div>
+    <h2 class="section-title" data-en="Skills" data-ar="مهاراتي">Skills</h2>
+  </div>
+  <div class="skills-container stagger">
+    <div class="skill-group">
+      <div class="skill-group-title" data-en="LANGUAGES" data-ar="لغات البرمجة">LANGUAGES</div>
+      <div class="skill-item">
+        <span class="skill-name">C#</span>
+        <div class="skill-bar-bg"><div class="skill-bar-fill" data-width="85%"></div></div>
+      </div>
+      <div class="skill-item">
+        <span class="skill-name">Python</span>
+        <div class="skill-bar-bg"><div class="skill-bar-fill" data-width="57%"></div></div>
+      </div>
+      <div class="skill-item">
+        <span class="skill-name">HTML/CSS</span>
+        <div class="skill-bar-bg"><div class="skill-bar-fill" data-width="38%"></div></div>
+      </div>
+      <div class="skill-item">
+        <span class="skill-name">JavaScript</span>
+        <div class="skill-bar-bg"><div class="skill-bar-fill" data-width="35%"></div></div>
+      </div>
+    </div>
+
+    <div class="skill-group">
+      <div class="skill-group-title" data-en="FRAMEWORKS & TOOLS" data-ar="أُطر وأدوات">FRAMEWORKS & TOOLS</div>
+      <div class="skill-item">
+        <span class="skill-name">BepInEx</span>
+        <div class="skill-bar-bg"><div class="skill-bar-fill" data-width="90%"></div></div>
+      </div>
+      <div class="skill-item">
+        <span class="skill-name">Harmony</span>
+        <div class="skill-bar-bg"><div class="skill-bar-fill" data-width="60%"></div></div>
+      </div>
+      <div class="skill-item">
+        <span class="skill-name">ASP.NET</span>
+        <div class="skill-bar-bg"><div class="skill-bar-fill" data-width="30%"></div></div>
+      </div>
+      <div class="skill-item">
+        <span class="skill-name">Git</span>
+        <div class="skill-bar-bg"><div class="skill-bar-fill" data-width="65%"></div></div>
+      </div>
+    </div>
+
+    <div class="skill-group">
+      <div class="skill-group-title" data-en="DOMAINS" data-ar="مجالات">DOMAINS</div>
+      <div class="skill-item">
+        <span class="skill-name" data-en="Game Modding" data-ar="مودنق ألعاب">Game Modding</span>
+        <div class="skill-bar-bg"><div class="skill-bar-fill" data-width="90%"></div></div>
+      </div>
+      <div class="skill-item">
+        <span class="skill-name" data-en="Bot development" data-ar="تطوير بوتات">Bot development</span>
+        <div class="skill-bar-bg"><div class="skill-bar-fill" data-width="40%"></div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== CONTACT ===== -->
+<section id="contact">
+  <div class="reveal">
+    <div class="section-label" data-en="// CONTACT" data-ar="// تواصل">// CONTACT</div>
+    <h2 class="section-title" data-en="Get in Touch" data-ar="تواصل معي">Get in Touch</h2>
+  </div>
+  <div class="contact-content">
+    <div class="reveal">
+      <p class="contact-text" data-en="Want to collaborate, ask about modding, or just say hi? I'm always open to connecting with fellow developers and modders." data-ar="تبي تتعاون، تسأل عن المودنق، أو بس تقول هلا؟ دايم أرحّب بالتواصل مع الكل.">Want to collaborate, ask about modding, or just say hi? I'm always open to connecting with anyone.</p>
+      <div class="ascii-art" dir="ltr">
+  _    _
+ | |  | |  _____  __
+ | |__| | / _ \ \/ /
+ |  __  ||  __/>  <
+ |_|  |_| \___/_/\_\
+      </div>
+    </div>
+    <div class="contact-links stagger">
+      <a href="https://youtube.com/@ItsreallyHex" target="_blank" class="contact-link">
+        <span class="link-icon">▶</span>
+        <div class="contact-link-info">
+          <span class="link-label">YouTube</span>
+          <span class="link-value">@ItsreallyHex</span>
+        </div>
+      </a>
+      <a href="https://github.com/itsreallyhex" target="_blank" class="contact-link">
+        <span class="link-icon">◈</span>
+        <div class="contact-link-info">
+          <span class="link-label">GitHub</span>
+          <span class="link-value">itsreallyhex</span>
+        </div>
+      </a>
+      <!--I'll use this later
+      <a href="https://discord.com" target="_blank" class="contact-link">
+        <span class="link-icon">◉</span>
+        <div class="contact-link-info">
+          <span class="link-label">Discord</span>
+          <span class="link-value" data-en="Join the community" data-ar="انضم للمجتمع">Join the community</span>
+        </div>
+      </a>
+      -->
+      <div class="contact-link" style="cursor: default;">
+        <span class="link-icon">◉</span>
+        <div class="contact-link-info">
+          <span class="link-label">Discord UserName</span>
+          <span class="link-value">@itsreallyhex</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <span data-en="© 2026 Hex — Built from scratch." data-ar="© 2026 هكس — مبني من الصفر.">© 2026 Hex — Built from scratch.</span>
+  <br>
+  <span style="font-size: 10px; opacity: 0.5;" data-en="AI assisted in building this site." data-ar="تم الاستعانة بالذكاء الاصطناعي في بناء هذا الموقع.">AI assisted in building this site.</span>
+</footer>
+
+<script>
+  // ===== LANGUAGE SWITCHING =====
+  let currentLang = 'en';
+
+  function setLang(lang) {
+    currentLang = lang;
+    const html = document.documentElement;
+    html.setAttribute('lang', lang);
+    html.setAttribute('dir', lang === 'ar' ? 'rtl' : 'ltr');
+
+    document.getElementById('btn-en').classList.toggle('active', lang === 'en');
+    document.getElementById('btn-ar').classList.toggle('active', lang === 'ar');
+
+    // Update all elements EXCEPT the typewriter
+    document.querySelectorAll('[data-en]').forEach(el => {
+      if (el.id === 'typewriter') return;
+      el.textContent = el.getAttribute(`data-${lang}`);
+    });
+
+    // Re-run typewriter for hero tagline
+    typeWriter();
+  }
+
+  // ===== TYPEWRITER EFFECT =====
+  const phrases = {
+    en: [
+      "Gorilla Tag Modder",
+      "C# Developer",
+      "@itsreallyhex",
+      "First Arabic GT Modding Channel",
+      "Hex?."
+    ],
+    ar: [
+      "مودّر قورلا تاق",
+      "مطوّر C#",
+      "@itsreallyhex",
+      "",
+      "هكس؟."
+    ]
+  };
+
+  let typewriterTimeout = null;
+  let currentPhraseIndex = 0;
+
+  function typeWriter() {
+    const el = document.getElementById('typewriter');
+    
+    // Clear any ongoing animation
+    if (typewriterTimeout) clearTimeout(typewriterTimeout);
+    currentPhraseIndex = 0;
+    el.innerHTML = '<span class="type-cursor"></span>';
+
+    function typePhraseAt(index) {
+      const list = phrases[currentLang];
+      if (!list) return;
+      const text = list[index % list.length];
+      let i = 0;
+
+      // Clear text but keep cursor
+      const cursor = el.querySelector('.type-cursor');
+      // Remove all text nodes
+      while (el.firstChild !== cursor) {
+        el.removeChild(el.firstChild);
+      }
+
+      function typeChar() {
+        if (i < text.length) {
+          const charNode = document.createTextNode(text.charAt(i));
+          el.insertBefore(charNode, cursor);
+          i++;
+          typewriterTimeout = setTimeout(typeChar, 70);
+        } else {
+          // Pause, then delete
+          typewriterTimeout = setTimeout(deleteChars, 2000);
+        }
+      }
+
+      function deleteChars() {
+        // Remove one character at a time (text nodes before cursor)
+        const textContent = el.textContent || '';
+        if (el.firstChild !== cursor && el.firstChild) {
+          // Get all text before cursor
+          let allText = '';
+          let node = el.firstChild;
+          while (node !== cursor) {
+            allText += node.textContent;
+            node = node.nextSibling;
+          }
+          
+          if (allText.length > 0) {
+            // Remove all text nodes
+            while (el.firstChild !== cursor) {
+              el.removeChild(el.firstChild);
+            }
+            // Re-add with one less character
+            const shorter = allText.slice(0, -1);
+            if (shorter.length > 0) {
+              el.insertBefore(document.createTextNode(shorter), cursor);
+            }
+            typewriterTimeout = setTimeout(deleteChars, 35);
+          } else {
+            // Done deleting, type next phrase
+            currentPhraseIndex++;
+            typewriterTimeout = setTimeout(() => typePhraseAt(currentPhraseIndex), 400);
+          }
+        } else {
+          // Done deleting, type next phrase
+          currentPhraseIndex++;
+          typewriterTimeout = setTimeout(() => typePhraseAt(currentPhraseIndex), 400);
+        }
+      }
+
+      typeChar();
+    }
+
+    // Start typing first phrase after a small delay
+    typewriterTimeout = setTimeout(() => typePhraseAt(0), 500);
+  }
+
+  // Run typewriter on page load
+  window.addEventListener('load', typeWriter);
+
+  // ===== SCROLL REVEAL =====
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('visible');
+
+        // Animate skill bars
+        if (entry.target.classList.contains('skill-group') || entry.target.closest('.stagger')) {
+          entry.target.querySelectorAll('.skill-bar-fill').forEach(bar => {
+            setTimeout(() => {
+              bar.style.width = bar.dataset.width;
+            }, 300);
+          });
+        }
+      }
+    });
+  }, { threshold: 0.15 });
+
+  document.querySelectorAll('.reveal, .stagger, .skill-group').forEach(el => {
+    observer.observe(el);
+  });
+
+  // ===== PARTICLES =====
+  const particlesContainer = document.getElementById('particles');
+  for (let i = 0; i < 20; i++) {
+    const particle = document.createElement('div');
+    particle.className = 'particle';
+    particle.style.left = Math.random() * 100 + '%';
+    particle.style.animationDelay = Math.random() * 8 + 's';
+    particle.style.animationDuration = (6 + Math.random() * 6) + 's';
+    particlesContainer.appendChild(particle);
+  }
+
+  // ===== ACTIVE NAV LINK =====
+  const sections = document.querySelectorAll('section[id]');
+  window.addEventListener('scroll', () => {
+    let current = '';
+    sections.forEach(section => {
+      const top = section.offsetTop - 200;
+      if (window.scrollY >= top) current = section.id;
+    });
+    document.querySelectorAll('.nav-links a').forEach(link => {
+      link.classList.toggle('active', link.getAttribute('href') === `#${current}`);
+    });
+  });
+</script>
+</body>
+</html>
