@@ -12,8 +12,8 @@ Terminal-themed, bilingual (EN/AR), built from scratch with vanilla HTML/CSS/JS.
 ```
 isithex.github.io/
 ├── index.html
-├── style.css (or equivalent)
 └── README.md
+feel free to add more
 ```
 
 ## Run locally
